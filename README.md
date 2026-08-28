@@ -38,6 +38,7 @@ Aucune installation, aucun serveur local et aucune commande ne sont nécessaires
 - Un clic droit sur une intervention placée supprime uniquement cette affectation.
 - Un clic droit sur la plage horaire d’un patient propose de supprimer le patient et toutes ses affectations, après confirmation.
 - Une intervention déjà posée peut être saisie et glissée directement vers un autre horaire ou un autre patient, sans retourner à la liste des infirmières.
+- Sur iPad, un appui long saisit l’affectation : elle peut être déplacée vers une autre plage, ou déposée hors de toute plage pour demander sa suppression.
 - Le bouton **Recommencer** remet toute la démo à zéro.
 
 Les données sont volontairement fictives et intégrées à la démo. Aucune contrainte métier n’est appliquée à ce stade ; elles seront définies après concertation avec la représentante du groupe.

@@ -60,6 +60,8 @@ const scheduleMax = document.getElementById("scheduleMax");
 let profileTarget = null;
 let linkedFileHandle = null;
 let linkedWriteTimer = null;
+let touchAssignmentActive = false;
+let suppressNextAssignmentClick = false;
 
 function createPatientDirectory() { return seedPatients.map(([id, name]) => ({ id, name, firstName: "", lastName: name.replace(/^M(me)?\.?\s*/, ""), phone: "" })); }
 function createPatients() { return seedPatients.map(([id, name, care, min, max]) => ({ id: `visit-${id}`, personId: id, name, firstName: "", lastName: name.replace(/^M(me)?\.?\s*/, ""), phone: "", care, min: min * 60, max: max * 60, assignments: [] })); }
@@ -125,6 +127,46 @@ function armAgendaAutoClose() {
     agendaAutoCloseHandler = null;
   };
   setTimeout(() => document.addEventListener("click", agendaAutoCloseHandler, { capture: true, once: true }), 0);
+}
+
+function beginTouchAssignmentGesture(patient, assignment, nurse, block, event) {
+  if (event.pointerType !== "touch") return;
+  touchAssignmentActive = true;
+  let activated = false; let lastX = event.clientX; let lastY = event.clientY;
+  const timer = setTimeout(() => {
+    activated = true; block.classList.add("touch-moving"); block.style.pointerEvents = "none";
+    status.textContent = `Déplacez ${nurse.name} vers une plage horaire, ou hors du planning pour supprimer l’affectation.`;
+  }, 450);
+  const clearHighlights = () => document.querySelectorAll(".window-band.touch-target").forEach(element => element.classList.remove("touch-target"));
+  const onMove = moveEvent => {
+    lastX = moveEvent.clientX; lastY = moveEvent.clientY;
+    if (!activated) return;
+    moveEvent.preventDefault(); clearHighlights();
+    document.elementFromPoint(lastX, lastY)?.closest(".window-band")?.classList.add("touch-target");
+  };
+  const finish = (cancelled = false) => {
+    clearTimeout(timer); document.removeEventListener("pointermove", onMove); document.removeEventListener("pointerup", onUp); document.removeEventListener("pointercancel", onCancel);
+    touchAssignmentActive = false; clearHighlights(); block.style.pointerEvents = ""; block.classList.remove("touch-moving");
+    if (!activated || cancelled) return;
+    suppressNextAssignmentClick = true;
+    setTimeout(() => { suppressNextAssignmentClick = false; }, 700);
+    const band = document.elementFromPoint(lastX, lastY)?.closest(".window-band");
+    if (band) {
+      const targetPatient = patients.find(item => item.id === band.dataset.patientId);
+      if (targetPatient) {
+        const rect = band.getBoundingClientRect(); const steps = (targetPatient.max - targetPatient.min) / STEP;
+        const offset = Math.max(0, Math.min(steps, Math.round((lastX - rect.left) / (rect.width / steps))));
+        draggedAssignment = { patientId: patient.id, assignmentId: assignment.id };
+        place(targetPatient, targetPatient.min + offset * STEP, nurse.id); return;
+      }
+    }
+    if (window.confirm(`Supprimer l’affectation de ${nurse.name} chez ${patient.name} ?`)) {
+      patient.assignments = patient.assignments.filter(item => item.id !== assignment.id);
+      status.textContent = `L’affectation de ${nurse.name} chez ${patient.name} a été supprimée.`; render();
+    } else status.textContent = "Suppression annulée.";
+  };
+  const onUp = () => finish(false); const onCancel = () => finish(true);
+  document.addEventListener("pointermove", onMove, { passive: false }); document.addEventListener("pointerup", onUp); document.addEventListener("pointercancel", onCancel);
 }
 
 function openProfile(type, item, isNew = false) {
@@ -231,6 +273,7 @@ function renderPlanner() {
     const windowStart = slots.indexOf(patient.min);
     const windowSlots = (patient.max - patient.min) / STEP;
     windowBand.className = "window-band";
+    windowBand.dataset.patientId = patient.id;
     windowBand.style.gridRow = row;
     windowBand.style.gridColumn = `${windowStart + 2} / span ${windowSlots}`;
     windowBand.innerHTML = `<button class="window-handle start" type="button" aria-label="Ajuster le début de la plage de ${patient.name}"></button><span class="window-time start-time">${time(patient.min)}</span><button class="window-mover" type="button" aria-label="Déplacer la plage de ${patient.name}"><strong>Glisser</strong><small>⋮⋮</small></button><span class="window-time end-time">${time(patient.max)}</span><button class="window-handle end" type="button" aria-label="Ajuster la fin de la plage de ${patient.name}"></button>`;
@@ -278,14 +321,17 @@ function renderPlanner() {
         status.textContent = `Déplacez directement l’intervention de ${nurse.name}.`;
       });
       block.addEventListener("dragend", () => { draggedNurse = null; draggedAssignment = null; block.classList.remove("moving"); document.querySelectorAll(".slot.over").forEach(element => element.classList.remove("over")); });
+      block.addEventListener("pointerdown", event => beginTouchAssignmentGesture(patient, assignment, nurse, block, event));
       block.addEventListener("click", event => {
         event.preventDefault(); event.stopPropagation();
+        if (suppressNextAssignmentClick) { suppressNextAssignmentClick = false; return; }
         selectedNurse = nurse.id;
         status.textContent = `${nurse.name} est sélectionnée depuis son affectation de ${time(assignment.start)}. Vous pouvez maintenant la répéter ailleurs.`;
         renderNurses();
       });
       block.addEventListener("contextmenu", event => {
         event.preventDefault(); event.stopPropagation();
+        if (touchAssignmentActive) return;
         patient.assignments = patient.assignments.filter(item => item.id !== assignment.id);
         status.textContent = `L’affectation de ${nurse.name} chez ${patient.name} à ${time(assignment.start)} a été supprimée.`;
         render();
