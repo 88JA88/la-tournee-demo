@@ -60,8 +60,7 @@ const scheduleMax = document.getElementById("scheduleMax");
 let profileTarget = null;
 let linkedFileHandle = null;
 let linkedWriteTimer = null;
-let touchAssignmentActive = false;
-let suppressNextAssignmentClick = false;
+let selectedAssignment = null;
 
 function createPatientDirectory() { return seedPatients.map(([id, name]) => ({ id, name, firstName: "", lastName: name.replace(/^M(me)?\.?\s*/, ""), phone: "" })); }
 function createPatients() { return seedPatients.map(([id, name, care, min, max]) => ({ id: `visit-${id}`, personId: id, name, firstName: "", lastName: name.replace(/^M(me)?\.?\s*/, ""), phone: "", care, min: min * 60, max: max * 60, assignments: [] })); }
@@ -97,7 +96,7 @@ function applyImportedPlanning(imported, fileName) {
   patientDirectory = Array.isArray(imported.patientDirectory) ? imported.patientDirectory : [];
   patients = imported.patients;
   nextAssignmentId = Number(imported.nextAssignmentId) || 1;
-  selectedNurse = null; draggedNurse = null; draggedAssignment = null; agendaNurse = null; validatedSignature = null;
+  selectedNurse = null; selectedAssignment = null; draggedNurse = null; draggedAssignment = null; agendaNurse = null; validatedSignature = null;
   status.textContent = `${fileName} est maintenant ouvert.`;
   render();
 }
@@ -129,44 +128,15 @@ function armAgendaAutoClose() {
   setTimeout(() => document.addEventListener("click", agendaAutoCloseHandler, { capture: true, once: true }), 0);
 }
 
-function beginTouchAssignmentGesture(patient, assignment, nurse, block, event) {
-  if (event.pointerType !== "touch") return;
-  touchAssignmentActive = true;
-  let activated = false; let lastX = event.clientX; let lastY = event.clientY;
-  const timer = setTimeout(() => {
-    activated = true; block.classList.add("touch-moving"); block.style.pointerEvents = "none";
-    status.textContent = `Déplacez ${nurse.name} vers une plage horaire, ou hors du planning pour supprimer l’affectation.`;
-  }, 450);
-  const clearHighlights = () => document.querySelectorAll(".window-band.touch-target").forEach(element => element.classList.remove("touch-target"));
-  const onMove = moveEvent => {
-    lastX = moveEvent.clientX; lastY = moveEvent.clientY;
-    if (!activated) return;
-    moveEvent.preventDefault(); clearHighlights();
-    document.elementFromPoint(lastX, lastY)?.closest(".window-band")?.classList.add("touch-target");
-  };
-  const finish = (cancelled = false) => {
-    clearTimeout(timer); document.removeEventListener("pointermove", onMove); document.removeEventListener("pointerup", onUp); document.removeEventListener("pointercancel", onCancel);
-    touchAssignmentActive = false; clearHighlights(); block.style.pointerEvents = ""; block.classList.remove("touch-moving");
-    if (!activated || cancelled) return;
-    suppressNextAssignmentClick = true;
-    setTimeout(() => { suppressNextAssignmentClick = false; }, 700);
-    const band = document.elementFromPoint(lastX, lastY)?.closest(".window-band");
-    if (band) {
-      const targetPatient = patients.find(item => item.id === band.dataset.patientId);
-      if (targetPatient) {
-        const rect = band.getBoundingClientRect(); const steps = (targetPatient.max - targetPatient.min) / STEP;
-        const offset = Math.max(0, Math.min(steps, Math.round((lastX - rect.left) / (rect.width / steps))));
-        draggedAssignment = { patientId: patient.id, assignmentId: assignment.id };
-        place(targetPatient, targetPatient.min + offset * STEP, nurse.id); return;
-      }
-    }
-    if (window.confirm(`Supprimer l’affectation de ${nurse.name} chez ${patient.name} ?`)) {
-      patient.assignments = patient.assignments.filter(item => item.id !== assignment.id);
-      status.textContent = `L’affectation de ${nurse.name} chez ${patient.name} a été supprimée.`; render();
-    } else status.textContent = "Suppression annulée.";
-  };
-  const onUp = () => finish(false); const onCancel = () => finish(true);
-  document.addEventListener("pointermove", onMove, { passive: false }); document.addEventListener("pointerup", onUp); document.addEventListener("pointercancel", onCancel);
+function deleteSelectedAssignment() {
+  if (!selectedAssignment) return;
+  const sourcePatient = patients.find(item => item.id === selectedAssignment.patientId);
+  const assignment = sourcePatient?.assignments.find(item => item.id === selectedAssignment.assignmentId);
+  const nurse = nurses.find(item => item.id === selectedAssignment.nurseId);
+  if (!sourcePatient || !assignment || !nurse) { selectedAssignment = null; return; }
+  if (!window.confirm(`Supprimer l’affectation de ${nurse.name} chez ${sourcePatient.name} ?`)) { status.textContent = "Suppression annulée."; return; }
+  sourcePatient.assignments = sourcePatient.assignments.filter(item => item.id !== assignment.id);
+  selectedAssignment = null; status.textContent = `L’affectation de ${nurse.name} chez ${sourcePatient.name} a été supprimée.`; render();
 }
 
 function openProfile(type, item, isNew = false) {
@@ -196,14 +166,14 @@ function renderNurses() {
       if (event.detail !== 1) return;
       clearTimeout(nurseClickTimer);
       nurseClickTimer = setTimeout(() => {
-        selectedNurse = nurse.id;
+        selectedNurse = nurse.id; selectedAssignment = null;
         status.textContent = `${nurse.name} reste sélectionnée pour les prochains placements, jusqu’au choix d’une autre infirmière.`;
         renderNurses();
       }, 230);
     });
     button.addEventListener("dblclick", event => {
       event.preventDefault(); clearTimeout(nurseClickTimer);
-      selectedNurse = nurse.id;
+      selectedNurse = nurse.id; selectedAssignment = null;
       agendaNurse = agendaNurse === nurse.id ? null : nurse.id;
       status.textContent = agendaNurse ? `Emploi du temps de ${nurse.name} ouvert.` : `Emploi du temps de ${nurse.name} refermé.`;
       renderNurses(); renderNurseAgenda();
@@ -211,7 +181,7 @@ function renderNurses() {
     });
     button.addEventListener("contextmenu", event => { event.preventDefault(); clearTimeout(nurseClickTimer); openProfile("nurse", nurse); });
     button.addEventListener("dragstart", event => {
-      draggedAssignment = null; draggedNurse = nurse.id; selectedNurse = nurse.id; event.dataTransfer.setData("text/plain", nurse.id); event.dataTransfer.effectAllowed = "copy"; renderNurses();
+      draggedAssignment = null; selectedAssignment = null; draggedNurse = nurse.id; selectedNurse = nurse.id; event.dataTransfer.setData("text/plain", nurse.id); event.dataTransfer.effectAllowed = "copy"; renderNurses();
     });
     button.addEventListener("dragend", () => { draggedNurse = null; document.querySelectorAll(".slot.over").forEach(el => el.classList.remove("over")); });
     return button;
@@ -287,7 +257,8 @@ function renderPlanner() {
       if (event.target.closest(".window-handle") || windowGestureMoved) return;
       const rect = windowBand.getBoundingClientRect();
       const offset = Math.max(0, Math.min(windowSlots, Math.round((event.clientX - rect.left) / (rect.width / windowSlots))));
-      place(patient, patient.min + offset * STEP, selectedNurse);
+      if (selectedAssignment) draggedAssignment = { patientId: selectedAssignment.patientId, assignmentId: selectedAssignment.assignmentId };
+      place(patient, patient.min + offset * STEP, selectedAssignment?.nurseId || selectedNurse);
     });
     windowBand.addEventListener("contextmenu", event => {
       event.preventDefault(); event.stopPropagation();
@@ -299,21 +270,22 @@ function renderPlanner() {
     planner.appendChild(windowBand);
     slots.forEach((value, colIndex) => {
       const inWindow = value >= patient.min && value <= patient.max;
-      const cell = document.createElement("button"); cell.type = "button"; cell.className = `slot${inWindow ? " open allowed" : " inactive"}`; cell.disabled = !inWindow;
+      const cell = document.createElement("button"); cell.type = "button"; cell.className = `slot${inWindow ? " open allowed" : " inactive"}`; cell.setAttribute("aria-disabled", String(!inWindow));
       cell.style.gridRow = row; cell.style.gridColumn = colIndex + 2; cell.setAttribute("aria-label", `${patient.name}, ${time(value)}`);
       if (inWindow) {
-        cell.addEventListener("click", () => place(patient, value, selectedNurse));
+        cell.addEventListener("click", () => { if (selectedAssignment) draggedAssignment = { patientId: selectedAssignment.patientId, assignmentId: selectedAssignment.assignmentId }; place(patient, value, selectedAssignment?.nurseId || selectedNurse); });
         cell.addEventListener("dragover", event => { if (!draggedNurse) return; event.preventDefault(); cell.classList.add("over"); event.dataTransfer.dropEffect = draggedAssignment ? "move" : "copy"; });
         cell.addEventListener("dragleave", () => cell.classList.remove("over"));
         cell.addEventListener("drop", event => { event.preventDefault(); cell.classList.remove("over"); place(patient, value, event.dataTransfer.getData("text/plain") || draggedNurse); });
-      }
+      } else cell.addEventListener("click", deleteSelectedAssignment);
       planner.appendChild(cell);
     });
     patient.assignments.forEach(assignment => {
       const nurse = nurses.find(item => item.id === assignment.nurseId);
       const sameSlot = patient.assignments.filter(item => item.start === assignment.start);
       const stackIndex = sameSlot.findIndex(item => item.id === assignment.id);
-      const block = document.createElement("button"); block.type = "button"; block.className = "assignment"; block.draggable = true; block.style.gridRow = row; block.style.gridColumn = `${slots.indexOf(assignment.start) + 2} / span 1`; block.style.setProperty("--nurse", nurse.color); block.style.setProperty("--stack", stackIndex);
+      const isSelectedAssignment = selectedAssignment?.patientId === patient.id && selectedAssignment?.assignmentId === assignment.id;
+      const block = document.createElement("button"); block.type = "button"; block.className = `assignment${isSelectedAssignment ? " selected-for-move" : ""}`; block.draggable = true; block.style.gridRow = row; block.style.gridColumn = `${slots.indexOf(assignment.start) + 2} / span 1`; block.style.setProperty("--nurse", nurse.color); block.style.setProperty("--stack", stackIndex);
       block.innerHTML = `<span>${nurse.initials}</span><strong>${time(assignment.start)}</strong>`; block.title = `${nurse.name} chez ${patient.name} à ${time(assignment.start)} — clic gauche pour sélectionner, glisser pour déplacer, clic droit pour supprimer`;
       block.addEventListener("dragstart", event => {
         event.stopPropagation(); draggedNurse = nurse.id; draggedAssignment = { patientId: patient.id, assignmentId: assignment.id };
@@ -321,18 +293,17 @@ function renderPlanner() {
         status.textContent = `Déplacez directement l’intervention de ${nurse.name}.`;
       });
       block.addEventListener("dragend", () => { draggedNurse = null; draggedAssignment = null; block.classList.remove("moving"); document.querySelectorAll(".slot.over").forEach(element => element.classList.remove("over")); });
-      block.addEventListener("pointerdown", event => beginTouchAssignmentGesture(patient, assignment, nurse, block, event));
       block.addEventListener("click", event => {
         event.preventDefault(); event.stopPropagation();
-        if (suppressNextAssignmentClick) { suppressNextAssignmentClick = false; return; }
         selectedNurse = nurse.id;
-        status.textContent = `${nurse.name} est sélectionnée depuis son affectation de ${time(assignment.start)}. Vous pouvez maintenant la répéter ailleurs.`;
-        renderNurses();
+        selectedAssignment = { patientId: patient.id, assignmentId: assignment.id, nurseId: nurse.id };
+        status.textContent = `${nurse.name} est sélectionnée à ${time(assignment.start)} : touchez une plage verte pour déplacer, ou une case grise pour supprimer.`;
+        renderNurses(); renderPlanner();
       });
       block.addEventListener("contextmenu", event => {
         event.preventDefault(); event.stopPropagation();
-        if (touchAssignmentActive) return;
         patient.assignments = patient.assignments.filter(item => item.id !== assignment.id);
+        if (selectedAssignment?.assignmentId === assignment.id) selectedAssignment = null;
         status.textContent = `L’affectation de ${nurse.name} chez ${patient.name} à ${time(assignment.start)} a été supprimée.`;
         render();
       });
@@ -377,7 +348,7 @@ function place(patient, start, nurseId) {
     if (moved) {
       sourcePatient.assignments = sourcePatient.assignments.filter(item => item.id !== moved.id);
       patient.assignments.push({ ...moved, nurseId, start });
-      draggedAssignment = null;
+      draggedAssignment = null; selectedAssignment = null;
       status.textContent = `${nurse.name} a été déplacée chez ${patient.name} à ${time(start)}.`;
       render(); return;
     }
@@ -536,5 +507,5 @@ profileForm.addEventListener("submit", event => {
   status.textContent = isNew ? (type === "patient-directory" ? `${item.name} a été ajouté à la liste permanente des patients.` : `${item.name} a été ajouté${type === "nurse" ? "e" : ""} au planning.`) : `${type === "nurse" ? "Fiche infirmière" : "Fiche patient et intervention"} enregistrée.`;
   render();
 });
-document.getElementById("resetButton").addEventListener("click", () => { patients = createPatients(); selectedNurse = null; draggedNurse = null; draggedAssignment = null; agendaNurse = null; nextAssignmentId = 1; status.textContent = "Démo réinitialisée. Choisissez une infirmière pour commencer."; render(); });
+document.getElementById("resetButton").addEventListener("click", () => { patients = createPatients(); selectedNurse = null; selectedAssignment = null; draggedNurse = null; draggedAssignment = null; agendaNurse = null; nextAssignmentId = 1; status.textContent = "Démo réinitialisée. Choisissez une infirmière pour commencer."; render(); });
 restorePlanning(); render();
