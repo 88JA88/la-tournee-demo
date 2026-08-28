@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notice succincte — La Tournée</title>
+  <style>
+    :root{color-scheme:light;--ink:#20372f;--green:#3f806d;--paper:#fffef9;--line:#d4ddd7;--soft:#eef5f1}
+    *{box-sizing:border-box}body{margin:0;padding:24px;color:var(--ink);background:#f4f2eb;font:16px/1.45 system-ui,-apple-system,sans-serif}
+    main{max-width:820px;margin:auto;padding:30px;border:1px solid var(--line);border-radius:22px;background:var(--paper);box-shadow:0 12px 35px #20372f12}
+    h1,h2{font-family:Georgia,serif}h1{margin:0 0 5px;font-size:36px}h2{margin:25px 0 10px;font-size:21px}p{margin:7px 0}.lead{color:#68786f}.gesture{display:grid;grid-template-columns:150px 1fr;gap:10px;padding:9px 0;border-bottom:1px solid #e7ebe8}.gesture strong{color:var(--green)}
+    .note{margin-top:24px;padding:13px 15px;border-radius:12px;background:var(--soft)}a{color:var(--green)}
+    @media(max-width:600px){body{padding:10px}main{padding:22px 18px}.gesture{grid-template-columns:1fr;gap:2px}h1{font-size:30px}}
+    @media print{body{padding:0;background:#fff}main{max-width:none;padding:0;border:0;box-shadow:none}.note{border:1px solid var(--line)}}
+  </style>
+</head>
+<body>
+<main>
+  <h1>La Tournée</h1>
+  <p class="lead">Notice succincte des gestes principaux — ordinateur et iPad.</p>
+
+  <h2>Créer et placer</h2>
+  <div class="gesture"><strong>Choisir une infirmière</strong><span>Cliquez ou touchez sa carte. Elle reste sélectionnée pour plusieurs placements.</span></div>
+  <div class="gesture"><strong>Placer un soin</strong><span>Cliquez ou touchez une demi-heure dans la plage verte du patient.</span></div>
+  <div class="gesture"><strong>Déplacer un soin</strong><span>Sélectionnez l’affectation posée, puis touchez son nouvel horaire dans une plage verte. Sur ordinateur, vous pouvez aussi la faire glisser.</span></div>
+  <div class="gesture"><strong>Supprimer un soin</strong><span>Sélectionnez l’affectation, puis touchez une case hors des plages vertes : la suppression est immédiate, sans confirmation. Sur ordinateur, le clic droit sur l’affectation fonctionne aussi.</span></div>
+
+  <h2>Patients et horaires</h2>
+  <div class="gesture"><strong>Ajouter un patient</strong><span>Utilisez « Ajouter au planning », choisissez le patient, l’intervention et sa plage horaire.</span></div>
+  <div class="gesture"><strong>Ajuster la plage</strong><span>Déplacez les poignées rondes aux extrémités de la barre verte. Faites glisser son centre pour déplacer toute la plage.</span></div>
+  <div class="gesture"><strong>Modifier une fiche</strong><span>Clic droit sur une infirmière ou sur le nom d’un patient. Sur iPad, cette fonction sera adaptée dans une étape ultérieure.</span></div>
+  <div class="gesture"><strong>Retirer une ligne</strong><span>Clic droit sur la plage verte du patient, puis confirmez. Sa fiche permanente reste disponible pour le remettre au planning.</span></div>
+
+  <h2>Consulter et conserver</h2>
+  <div class="gesture"><strong>Voir une tournée</strong><span>Double-cliquez sur une infirmière pour afficher son emploi du temps ; le clic suivant le referme.</span></div>
+  <div class="gesture"><strong>Enregistrer</strong><span>Le planning est mémorisé automatiquement dans ce navigateur. « Enregistrer » force une sauvegarde immédiate.</span></div>
+  <div class="gesture"><strong>Valider</strong><span>« Valider la journée » conserve une version datée du planning.</span></div>
+  <div class="gesture"><strong>Transférer</strong><span>« JSON » télécharge une archive. « Choisir le fichier » permet ensuite d’ouvrir une archive JSON.</span></div>
+  <div class="gesture"><strong>Créer le PDF</strong><span>« PDF » ouvre l’impression ; choisissez « Enregistrer au format PDF ».</span></div>
+
+  <p class="note"><strong>À ce stade :</strong> aucune restriction métier n’est appliquée. Une même infirmière peut être placée plusieurs fois, y compris sur des horaires voisins ou chez le même patient.</p>
+</main>
+</body>
+</html>

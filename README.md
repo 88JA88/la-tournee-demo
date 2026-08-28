@@ -8,6 +8,8 @@ Double-cliquer simplement sur `index.html`.
 
 Aucune installation, aucun serveur local et aucune commande ne sont nécessaires. Le navigateur charge directement `styles.css` et `app.js`, qui doivent rester dans le même dossier que `index.html`.
 
+Le bouton **? Notice** ouvre une notice succincte des gestes principaux, adaptée à l’ordinateur et à l’iPad.
+
 ## Principe testé
 
 - La journée va de 07:00 à 19:00, avec une colonne toutes les 30 minutes.
