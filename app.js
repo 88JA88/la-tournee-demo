@@ -408,8 +408,8 @@ function updateValidationBadge() {
 function exportPlanning() {
   const payload = { current: snapshot(), validatedVersions: validatedVersions() };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `la-tournee-${DAY}.json`; link.click();
-  setTimeout(() => URL.revokeObjectURL(link.href), 1000); status.textContent = `Archive la-tournee-${DAY}.json exportée.`;
+  const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `la-journee-${DAY}.json`; link.click();
+  setTimeout(() => URL.revokeObjectURL(link.href), 1000); status.textContent = `Archive la-journee-${DAY}.json exportée.`;
 }
 
 function buildPrintGroup() {
@@ -442,13 +442,13 @@ document.getElementById("openJsonInput").addEventListener("change", async event 
     const imported = await readPlanningFile(file);
     if (patients.length && !window.confirm("Ouvrir ce fichier remplacera le planning actuellement affiché. Continuer ?")) return;
     linkedFileHandle = null; applyImportedPlanning(imported, file.name);
-  } catch (error) { window.alert("Ce fichier ne contient pas un planning La Tournée valide."); }
+  } catch (error) { window.alert("Ce fichier ne contient pas un planning La Journée valide."); }
   finally { event.target.value = ""; }
 });
 document.getElementById("linkJsonButton").addEventListener("click", async () => {
   if (typeof window.showOpenFilePicker !== "function") { window.alert("Ce navigateur ne permet pas la liaison directe. Utilisez Ouvrir JSON et JSON pour exporter."); return; }
   try {
-    const [handle] = await window.showOpenFilePicker({ multiple: false, types: [{ description: "Planning La Tournée", accept: { "application/json": [".json"] } }] });
+    const [handle] = await window.showOpenFilePicker({ multiple: false, types: [{ description: "Planning La Journée", accept: { "application/json": [".json"] } }] });
     const imported = await readPlanningFile(await handle.getFile());
     if (patients.length && !window.confirm("Lier ce fichier remplacera le planning actuellement affiché. Continuer ?")) return;
     linkedFileHandle = handle; applyImportedPlanning(imported, handle.name); await writeLinkedFile();

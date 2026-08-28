@@ -1,6 +1,6 @@
-# La Tournée
+# La Journée
 
-Démo autonome d’un tableau visuel pour amorcer l’organisation d’une tournée infirmière.
+Démo autonome d’un tableau visuel pour amorcer l’organisation d’une journée infirmière.
 
 ## Ouvrir la démo
 
@@ -49,7 +49,7 @@ Le fichier `data.json` accompagne la version publiée comme jeu de données fict
 
 L’affichage rapproche fortement les lignes patients tout en conservant des rectangles horaires et des affectations suffisamment hauts pour rester lisibles et faciles à manipuler.
 
-Les compteurs sont regroupés avec les titres principaux : le nombre de placements suit immédiatement « Construisons la tournée » et le nombre d’interventions suit le nom de l’infirmière.
+Les compteurs sont regroupés avec les titres principaux : le nombre de placements suit immédiatement « Organisons la journée » et le nombre d’interventions suit le nom de l’infirmière.
 
 Chaque carte d’infirmière affiche également un badge coloré « X soins placés », lisible sans ouvrir ni faire défiler son emploi du temps.
 
