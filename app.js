@@ -58,6 +58,8 @@ const scheduleCare = document.getElementById("scheduleCare");
 const scheduleMin = document.getElementById("scheduleMin");
 const scheduleMax = document.getElementById("scheduleMax");
 let profileTarget = null;
+let linkedFileHandle = null;
+let linkedWriteTimer = null;
 
 function createPatientDirectory() { return seedPatients.map(([id, name]) => ({ id, name, firstName: "", lastName: name.replace(/^M(me)?\.?\s*/, ""), phone: "" })); }
 function createPatients() { return seedPatients.map(([id, name, care, min, max]) => ({ id: `visit-${id}`, personId: id, name, firstName: "", lastName: name.replace(/^M(me)?\.?\s*/, ""), phone: "", care, min: min * 60, max: max * 60, assignments: [] })); }
@@ -65,6 +67,54 @@ function time(value) { return `${String(Math.floor(value / 60)).padStart(2, "0")
 
 function fillTimeSelect(select, values, selected) {
   select.replaceChildren(...values.map(value => { const option = document.createElement("option"); option.value = value; option.textContent = time(value); option.selected = value === selected; return option; }));
+}
+
+function minutesFromTime(value) { const [hours, minutes] = String(value).split(":").map(Number); return hours * 60 + minutes; }
+
+function normalizeImportedPlanning(payload) {
+  if (payload?.current?.format === "la-tournee-v1") return payload.current;
+  if (payload?.format === "la-tournee-v1") return payload;
+  if (payload?.format !== "la-tournee-demo-v1" || !Array.isArray(payload.planning)) throw new Error("Format inconnu");
+  const directory = (payload.patientDirectory || []).map(person => ({ ...person, name: [person.firstName, person.lastName].filter(Boolean).join(" ") }));
+  const importedNurses = (payload.nurses || []).map((item, index) => {
+    const current = nurses.find(nurse => nurse.id === item.id);
+    const name = [item.firstName, item.lastName].filter(Boolean).join(" ");
+    return { ...current, ...item, name, initials: `${item.firstName?.charAt(0) || ""}${item.lastName?.charAt(0) || ""}`.toUpperCase(), color: current?.color || ["#3f806d", "#d47f61", "#517f9a", "#8e6b9e", "#c1903e"][index % 5], icon: current?.icon || "✚" };
+  });
+  const importedPatients = payload.planning.map((visit, index) => {
+    const person = directory.find(item => item.id === visit.patientId) || { id: visit.patientId, name: visit.patientId, firstName: "", lastName: visit.patientId, phone: "" };
+    const assignments = visit.nurseId && visit.targetTime ? [{ id: index + 1, nurseId: visit.nurseId, start: minutesFromTime(visit.targetTime) }] : [];
+    return { ...person, id: `visit-import-${index}`, personId: person.id, care: visit.intervention, min: minutesFromTime(visit.window[0]), max: minutesFromTime(visit.window[1]), assignments };
+  });
+  return { format: "la-tournee-v1", nurses: importedNurses, patientDirectory: directory, patients: importedPatients, nextAssignmentId: importedPatients.length + 1 };
+}
+
+function applyImportedPlanning(imported, fileName) {
+  if (!Array.isArray(imported.patients) || !Array.isArray(imported.nurses)) throw new Error("Planning incomplet");
+  nurses.splice(0, nurses.length, ...imported.nurses);
+  patientDirectory = Array.isArray(imported.patientDirectory) ? imported.patientDirectory : [];
+  patients = imported.patients;
+  nextAssignmentId = Number(imported.nextAssignmentId) || 1;
+  selectedNurse = null; draggedNurse = null; draggedAssignment = null; agendaNurse = null; validatedSignature = null;
+  status.textContent = `${fileName} est maintenant ouvert.`;
+  render();
+}
+
+async function readPlanningFile(file) { return normalizeImportedPlanning(JSON.parse(await file.text())); }
+
+async function writeLinkedFile() {
+  if (!linkedFileHandle) return;
+  try {
+    const writable = await linkedFileHandle.createWritable();
+    await writable.write(JSON.stringify({ current: snapshot(), validatedVersions: validatedVersions() }, null, 2));
+    await writable.close();
+  } catch (error) { status.textContent = "Le fichier lié n’a pas pu être mis à jour. Utilisez le bouton JSON."; }
+}
+
+function scheduleLinkedWrite() {
+  if (!linkedFileHandle) return;
+  clearTimeout(linkedWriteTimer);
+  linkedWriteTimer = setTimeout(writeLinkedFile, 350);
 }
 
 function armAgendaAutoClose() {
@@ -297,6 +347,7 @@ function snapshot(validatedAt = null) { return { format: "la-tournee-v1", day: D
 function savePlanning(showMessage = true) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot()));
+    scheduleLinkedWrite();
     if (showMessage) status.textContent = `Planning enregistré dans ce navigateur à ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}.`;
   } catch (error) { status.textContent = "La sauvegarde locale est bloquée par ce navigateur. Utilisez l’export JSON."; }
 }
@@ -369,6 +420,25 @@ document.getElementById("saveButton").addEventListener("click", () => savePlanni
 document.getElementById("validateButton").addEventListener("click", validateDay);
 document.getElementById("exportButton").addEventListener("click", exportPlanning);
 document.getElementById("printButton").addEventListener("click", printNurseAgenda);
+document.getElementById("openJsonInput").addEventListener("change", async event => {
+  const file = event.target.files[0]; if (!file) return;
+  try {
+    const imported = await readPlanningFile(file);
+    if (patients.length && !window.confirm("Ouvrir ce fichier remplacera le planning actuellement affiché. Continuer ?")) return;
+    linkedFileHandle = null; applyImportedPlanning(imported, file.name);
+  } catch (error) { window.alert("Ce fichier ne contient pas un planning La Tournée valide."); }
+  finally { event.target.value = ""; }
+});
+document.getElementById("linkJsonButton").addEventListener("click", async () => {
+  if (typeof window.showOpenFilePicker !== "function") { window.alert("Ce navigateur ne permet pas la liaison directe. Utilisez Ouvrir JSON et JSON pour exporter."); return; }
+  try {
+    const [handle] = await window.showOpenFilePicker({ multiple: false, types: [{ description: "Planning La Tournée", accept: { "application/json": [".json"] } }] });
+    const imported = await readPlanningFile(await handle.getFile());
+    if (patients.length && !window.confirm("Lier ce fichier remplacera le planning actuellement affiché. Continuer ?")) return;
+    linkedFileHandle = handle; applyImportedPlanning(imported, handle.name); await writeLinkedFile();
+    status.textContent = `${handle.name} est lié : les prochains enregistrements mettront ce fichier à jour.`;
+  } catch (error) { if (error?.name !== "AbortError") window.alert("Impossible de lier ce fichier JSON."); }
+});
 document.getElementById("addNurseButton").addEventListener("click", () => {
   const colors = ["#3f806d", "#d47f61", "#517f9a", "#8e6b9e", "#c1903e"];
   openProfile("nurse", { id: `nurse-${Date.now()}`, name: "", firstName: "", lastName: "", proNumber: "", phone: "", initials: "NI", color: colors[nurses.length % colors.length], icon: "✚" }, true);

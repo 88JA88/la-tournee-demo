@@ -56,5 +56,7 @@ Chaque carte d’infirmière affiche également un badge coloré « X soins plac
 - **Enregistrer** force une sauvegarde immédiate et affiche son heure.
 - **Valider la journée** conserve une version figée et horodatée ; les modifications ultérieures ne remplacent pas cette version.
 - **JSON** exporte le planning courant et toutes les versions validées dans une archive portable.
+- **Ouvrir JSON** permet de choisir un fichier dans le Finder et remplace le planning après confirmation.
+- **Lier le fichier** reproduit le système de JA Project dans les navigateurs compatibles : le fichier choisi est ensuite réécrit lors des enregistrements. Dans les autres navigateurs, Ouvrir JSON et JSON restent disponibles.
 - **PDF** regroupe toute l’équipe dans un document définitif et compact : une fiche par infirmière avec son nom et la liste verticale heure–patient–intervention, puis ouvre la boîte du navigateur où « Enregistrer au format PDF » peut être choisi.
 - Dans cette liste, la colonne Intervention est placée immédiatement après la colonne Patient afin d’éviter un grand espace vide.
