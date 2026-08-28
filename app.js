@@ -134,7 +134,6 @@ function deleteSelectedAssignment() {
   const assignment = sourcePatient?.assignments.find(item => item.id === selectedAssignment.assignmentId);
   const nurse = nurses.find(item => item.id === selectedAssignment.nurseId);
   if (!sourcePatient || !assignment || !nurse) { selectedAssignment = null; return; }
-  if (!window.confirm(`Supprimer l’affectation de ${nurse.name} chez ${sourcePatient.name} ?`)) { status.textContent = "Suppression annulée."; return; }
   sourcePatient.assignments = sourcePatient.assignments.filter(item => item.id !== assignment.id);
   selectedAssignment = null; status.textContent = `L’affectation de ${nurse.name} chez ${sourcePatient.name} a été supprimée.`; render();
 }
