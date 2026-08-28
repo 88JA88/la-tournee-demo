@@ -8,7 +8,7 @@ const slots = Array.from({ length: (END - START) / STEP + 1 }, (_, i) => START +
 
 const nurses = [
   { id: "anne", name: "Anne", initials: "AN", color: "#3f806d", icon: "🌿" },
-  { id: "claire", name: "Claire", initials: "CL", color: "#d47f61", icon: "☀️" },
+  { id: "claire", name: "Aurélie", initials: "AU", color: "#d47f61", icon: "☀️" },
   { id: "marie", name: "Marie", initials: "MA", color: "#517f9a", icon: "💧" },
   { id: "sophie", name: "Sophie", initials: "SO", color: "#8e6b9e", icon: "✦" },
   { id: "nadia", name: "Nadia", initials: "NA", color: "#c1903e", icon: "🌼" }
@@ -375,6 +375,7 @@ function restorePlanning() {
       patients = saved.patients.map(patient => ({ ...patient, personId: patient.personId || patient.id.replace(/^visit-/, "") })); nextAssignmentId = Number(saved.nextAssignmentId) || 1;
       patientDirectory = Array.isArray(saved.patientDirectory) ? saved.patientDirectory : patients.filter((patient, index, list) => list.findIndex(item => item.personId === patient.personId) === index).map(patient => ({ id: patient.personId, name: patient.name, firstName: patient.firstName || "", lastName: patient.lastName || patient.name.replace(/^M(me)?\.?\s*/, ""), phone: patient.phone || "" }));
       if (Array.isArray(saved.nurses)) saved.nurses.forEach(savedNurse => {
+        if (savedNurse.id === "claire" && savedNurse.name === "Claire") Object.assign(savedNurse, { name: "Aurélie", initials: "AU" });
         const nurse = nurses.find(item => item.id === savedNurse.id);
         if (nurse) Object.assign(nurse, savedNurse); else nurses.push(savedNurse);
       });

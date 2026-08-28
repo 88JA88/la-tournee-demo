@@ -5,7 +5,7 @@
   "settings": { "start": "07:00", "end": "19:00", "stepMinutes": 30 },
   "nurses": [
     { "id": "anne", "firstName": "Anne", "lastName": "Demo", "proNumber": "DEMO-001", "phone": "00 00 00 00 01" },
-    { "id": "claire", "firstName": "Claire", "lastName": "Demo", "proNumber": "DEMO-002", "phone": "00 00 00 00 02" },
+    { "id": "claire", "firstName": "Aurélie", "lastName": "Demo", "proNumber": "DEMO-002", "phone": "00 00 00 00 02" },
     { "id": "marie", "firstName": "Marie", "lastName": "Demo", "proNumber": "DEMO-003", "phone": "00 00 00 00 03" },
     { "id": "sophie", "firstName": "Sophie", "lastName": "Demo", "proNumber": "DEMO-004", "phone": "00 00 00 00 04" },
     { "id": "nadia", "firstName": "Nadia", "lastName": "Demo", "proNumber": "DEMO-005", "phone": "00 00 00 00 05" }
