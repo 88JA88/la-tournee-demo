@@ -1,0 +1,29 @@
+{
+  "format": "la-tournee-demo-v1",
+  "notice": "Données entièrement fictives destinées à la démonstration publique.",
+  "day": "2026-08-28",
+  "settings": { "start": "07:00", "end": "19:00", "stepMinutes": 30 },
+  "nurses": [
+    { "id": "anne", "firstName": "Anne", "lastName": "Demo", "proNumber": "DEMO-001", "phone": "00 00 00 00 01" },
+    { "id": "claire", "firstName": "Claire", "lastName": "Demo", "proNumber": "DEMO-002", "phone": "00 00 00 00 02" },
+    { "id": "marie", "firstName": "Marie", "lastName": "Demo", "proNumber": "DEMO-003", "phone": "00 00 00 00 03" },
+    { "id": "sophie", "firstName": "Sophie", "lastName": "Demo", "proNumber": "DEMO-004", "phone": "00 00 00 00 04" },
+    { "id": "nadia", "firstName": "Nadia", "lastName": "Demo", "proNumber": "DEMO-005", "phone": "00 00 00 00 05" }
+  ],
+  "patientDirectory": [
+    { "id": "bernard", "firstName": "Paul", "lastName": "Bernard", "phone": "00 00 00 01 01" },
+    { "id": "dupont", "firstName": "Alice", "lastName": "Dupont", "phone": "00 00 00 01 02" },
+    { "id": "durand", "firstName": "Lucie", "lastName": "Durand", "phone": "00 00 00 01 03" },
+    { "id": "legrand", "firstName": "Emma", "lastName": "Legrand", "phone": "00 00 00 01 04" },
+    { "id": "martin", "firstName": "Louis", "lastName": "Martin", "phone": "00 00 00 01 05" },
+    { "id": "moreau", "firstName": "Jeanne", "lastName": "Moreau", "phone": "00 00 00 01 06" }
+  ],
+  "planning": [
+    { "patientId": "dupont", "intervention": "Pansement", "window": ["08:30", "11:30"], "nurseId": "claire", "targetTime": "09:30" },
+    { "patientId": "durand", "intervention": "Prise de sang", "window": ["07:30", "10:00"], "nurseId": "claire", "targetTime": "09:00" },
+    { "patientId": "bernard", "intervention": "Perfusion", "window": ["10:30", "13:30"], "nurseId": "anne", "targetTime": "11:30" },
+    { "patientId": "legrand", "intervention": "Pansement", "window": ["12:30", "16:00"], "nurseId": "marie", "targetTime": "13:00" },
+    { "patientId": "moreau", "intervention": "Pansement", "window": ["10:30", "14:00"], "nurseId": "nadia", "targetTime": "12:00" },
+    { "patientId": "dupont", "intervention": "Injection", "window": ["16:00", "18:00"], "nurseId": "sophie", "targetTime": "17:00" }
+  ]
+}

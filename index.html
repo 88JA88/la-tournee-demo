@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f3ec">
+  <title>La Tournée — Démo planning</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">✦</span><div><strong>La Tournée</strong><small>Démo du principe</small></div></div>
+    <div class="top-actions">
+      <span id="validationBadge" class="validation-badge">Non validé</span>
+      <button id="saveButton" class="action-button" type="button">Enregistrer</button>
+      <button id="validateButton" class="action-button primary" type="button">✓ Valider la journée</button>
+      <button id="exportButton" class="action-button" type="button">⇩ JSON</button>
+      <button id="printButton" class="action-button" type="button">⎙ PDF</button>
+      <button id="resetButton" class="reset" type="button">↺ Recommencer</button>
+    </div>
+  </header>
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">VENDREDI 28 AOÛT · 07:00–19:00</p><div class="intro-title-line"><h1>Construisons la tournée</h1><div class="score" aria-live="polite"><strong id="score">0 placement</strong><span>contraintes non activées</span></div></div><p>Glissez une infirmière sur une demi-heure disponible. Ajustez les fenêtres avec les poignées.</p></div>
+    </section>
+    <section class="nurse-dock" aria-labelledby="nursesTitle">
+      <div class="dock-title"><p class="eyebrow">ÉQUIPE DU JOUR</p><div class="title-with-action"><h2 id="nursesTitle">Choisissez une infirmière</h2><button id="addNurseButton" class="small-add" type="button">＋ Nouvelle infirmière</button></div></div>
+      <div id="nurseList" class="nurse-list"></div>
+      <p class="hint"><span>☝</span> Sélectionnez une infirmière, puis posez-la uniquement sur un rectangle horaire coloré.</p>
+    </section>
+    <section id="nurseAgenda" class="nurse-agenda" hidden aria-live="polite">
+      <div class="agenda-heading">
+        <div><p class="eyebrow">EMPLOI DU TEMPS DE LA JOURNÉE</p><div class="agenda-title-line"><h2 id="agendaTitle"></h2><p id="agendaSummary"></p></div></div>
+      </div>
+      <div class="agenda-scroll"><div id="nurseTimeline" class="nurse-timeline"></div></div>
+      <div class="agenda-table-wrap">
+        <table class="agenda-table"><thead><tr><th>Heure</th><th>Patient</th><th>Intervention</th></tr></thead><tbody id="agendaBody"></tbody></table>
+      </div>
+    </section>
+    <section class="planning-card">
+      <div class="planning-head">
+        <div><p class="eyebrow">PLANNING VISUEL</p><div class="title-with-action"><h2>Patients et fenêtres disponibles</h2><button id="schedulePatientButton" class="small-add primary-add" type="button">＋ Ajouter au planning</button><button id="addPatientButton" class="small-add" type="button">＋ Nouveau patient</button></div></div>
+        <div class="legend"><span><i class="possible"></i>Plage possible</span><span><i class="assigned"></i>Intervention placée</span></div>
+      </div>
+      <div class="table-scroll"><div id="planner" class="planner" aria-label="Planning des patients de 7 heures à 19 heures"></div></div>
+    </section>
+    <p id="status" class="status" role="status" aria-live="polite">Choisissez une infirmière pour commencer.</p>
+    <section id="printGroup" class="print-group" aria-label="Emplois du temps de toute l’équipe"></section>
+  </main>
+  <dialog id="profileDialog" class="profile-dialog">
+    <form id="profileForm" method="dialog">
+      <header><p class="eyebrow">FICHE MODIFIABLE</p><h2 id="profileTitle">Informations</h2></header>
+      <div class="profile-fields">
+        <label>Nom<input id="profileLastName" name="lastName" autocomplete="family-name" required></label>
+        <label>Prénom<input id="profileFirstName" name="firstName" autocomplete="given-name"></label>
+        <label id="profileProGroup">N° professionnel<input id="profileProNumber" name="proNumber"></label>
+        <label>Téléphone<input id="profilePhone" name="phone" type="tel" autocomplete="tel"></label>
+        <label id="profileCareGroup">Intervention<select id="profileCare" name="care"><option>Pansement</option><option>Injection</option><option>Prise de sang</option><option>Perfusion</option><option>Surveillance</option><option>Autre</option></select></label>
+      </div>
+      <p class="profile-note">Ces renseignements pourront être complétés plus tard.</p>
+      <div class="profile-actions"><button type="button" id="profileCancel">Annuler</button><button type="submit" class="primary">Enregistrer</button></div>
+    </form>
+  </dialog>
+  <dialog id="schedulePatientDialog" class="profile-dialog">
+    <form id="schedulePatientForm" method="dialog">
+      <header><p class="eyebrow">INTERVENTION DU JOUR</p><h2>Ajouter un patient au planning</h2></header>
+      <div class="profile-fields">
+        <label>Patient<select id="schedulePatientSelect" required></select></label>
+        <label>Intervention<select id="scheduleCare"><option>Pansement</option><option>Injection</option><option>Prise de sang</option><option>Perfusion</option><option>Surveillance</option><option>Autre</option></select></label>
+        <label>Disponible à partir de<select id="scheduleMin" required></select></label>
+        <label>Disponible jusqu’à<select id="scheduleMax" required></select></label>
+      </div>
+      <p class="profile-note">La plage proposée par défaut est 07:00–09:00. Elle restera ajustable ensuite avec les poignées du planning.</p>
+      <div class="profile-actions"><button type="button" id="schedulePatientCancel">Annuler</button><button type="submit" class="primary">Ajouter au planning</button></div>
+    </form>
+  </dialog>
+  <script src="app.js"></script>
+</body>
+</html>
