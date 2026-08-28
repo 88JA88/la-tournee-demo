@@ -420,6 +420,7 @@ document.getElementById("saveButton").addEventListener("click", () => savePlanni
 document.getElementById("validateButton").addEventListener("click", validateDay);
 document.getElementById("exportButton").addEventListener("click", exportPlanning);
 document.getElementById("printButton").addEventListener("click", printNurseAgenda);
+document.getElementById("openJsonButton").addEventListener("click", () => document.getElementById("openJsonInput").click());
 document.getElementById("openJsonInput").addEventListener("change", async event => {
   const file = event.target.files[0]; if (!file) return;
   try {
